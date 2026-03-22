@@ -5,7 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
-import androidx.lifecycle.viewmodel.compose.viewModel
+// NEW IMPORTS FOR HILT
+import androidx.hilt.navigation.compose.hiltViewModel
+import dagger.hilt.android.AndroidEntryPoint
+// YOUR EXISTING IMPORTS
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,20 +20,22 @@ import com.example.calling_app.ui.feature.screens.IncomingCallScreen
 import com.example.calling_app.ui.feature.screens.OutgoingCallScreen
 import com.example.calling_app.util.formatDuration
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
                 val navController = rememberNavController()
-                val viewModel: CallViewModel = viewModel()
+
+
+                val viewModel: CallViewModel = hiltViewModel()
                 val state by viewModel.callState.collectAsState()
 
                 LaunchedEffect(state::class) {
                     when (state) {
                         is CallState.Idle -> {
-                            // Check current route to prevent redundant navigation
+
                             if (navController.currentDestination?.route != "dial") {
                                 navController.navigate("dial") { popUpTo(0) }
                             }
@@ -42,7 +47,7 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate("active")
                             }
                         }
-                        is CallState.Ended -> { /* Wait briefly to show 'Ended' state */ }
+                        is CallState.Ended -> {  }
                     }
                 }
 
@@ -50,12 +55,17 @@ class MainActivity : ComponentActivity() {
                     composable("dial") {
                         DialPadScreen(
                             onAppCallClick = { viewModel.startAppCall(it) },
-                            onTestIncomingClick = { viewModel.simulateIncomingCall() }
+                            onTestIncomingClick = { viewModel.simulateIncomingCall() },
+                            onSaveContact = { name, number -> viewModel.saveContact(name, number) }
                         )
                     }
                     composable("outgoing") {
-                        val number = (state as? CallState.Calling)?.number ?: ""
-                        OutgoingCallScreen(number = number, onEndCall = { viewModel.endCall() })
+                        val s = state as? CallState.Calling
+                        OutgoingCallScreen(
+                            number = s?.number ?: "",
+                            name = s?.name,
+                            onEndCall = { viewModel.endCall() }
+                        )
                     }
                     composable("incoming") {
                         val s = state as? CallState.Ringing
@@ -70,6 +80,7 @@ class MainActivity : ComponentActivity() {
 
                         ActiveCallScreen(
                             number = s?.number ?: "",
+                            name = s?.name,
                             timerText = formatDuration(s?.durationSeconds ?: 0),
                             isMuted = s?.isMuted ?: false,
                             isSpeakerOn = s?.isSpeakerOn ?: false,

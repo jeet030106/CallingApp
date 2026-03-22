@@ -1,11 +1,9 @@
 package com.example.calling_app.ui.feature.screens
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +19,7 @@ import com.example.calling_app.R
 @Composable
 fun ActiveCallScreen(
     number: String,
+    name: String?,
     timerText: String,
     isMuted: Boolean,
     isSpeakerOn: Boolean,
@@ -33,14 +32,23 @@ fun ActiveCallScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Top: Caller Info & Timer
+
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 80.dp)) {
-            Text(text = number, fontSize = 36.sp, color = Color.White)
-            Spacer(modifier = Modifier.height(8.dp))
+
+
+            Text(text = name ?: number, fontSize = 36.sp, color = Color.White)
+
+
+            if (name != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = number, fontSize = 18.sp, color = Color.Gray)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
             Text(text = timerText, fontSize = 20.sp, color = Color(0xFF4CD964)) // Green Timer
         }
 
-        // Middle: Controls
+
         Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
             CallControlButton(
                 icon = if (isMuted) painterResource(R.drawable.mic_on) else painterResource(R.drawable.mic_on),
@@ -56,7 +64,7 @@ fun ActiveCallScreen(
             )
         }
 
-        // Bottom: Hangup
+
         FloatingActionButton(
             onClick = onEndCall,
             containerColor = Color(0xFFFF3B30), // Red

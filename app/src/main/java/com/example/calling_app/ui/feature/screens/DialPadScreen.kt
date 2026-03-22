@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.PersonAdd // NEW Import
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,9 +27,15 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun DialPadScreen(
     onAppCallClick: (String) -> Unit,
-    onTestIncomingClick: () -> Unit // Kept for grading requirements
+    onTestIncomingClick: () -> Unit,
+    onSaveContact: (String, String) -> Unit
 ) {
     var inputNumber by remember { mutableStateOf("") }
+
+
+    var showAddDialog by remember { mutableStateOf(false) }
+    var contactName by remember { mutableStateOf("") }
+
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) context.startActivity(Intent(Intent.ACTION_CALL, Uri.parse("tel:$inputNumber")))
@@ -39,7 +46,62 @@ fun DialPadScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = inputNumber.ifEmpty { "Enter a number" }, fontSize = 32.sp, color = Color.White)
+
+        Row(
+            modifier = Modifier.fillMaxWidth().height(64.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = inputNumber.ifEmpty { "Enter a number" }, fontSize = 32.sp, color = Color.White)
+
+            // Show the Add Contact icon only if they typed something
+            if (inputNumber.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(16.dp))
+                IconButton(onClick = { showAddDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.PersonAdd,
+                        contentDescription = "Add Contact",
+                        tint = Color(0xFF4CD964)
+                    )
+                }
+            }
+        }
+
+
+        if (showAddDialog) {
+            AlertDialog(
+                onDismissRequest = { showAddDialog = false },
+                title = { Text("Save Contact") },
+                text = {
+                    Column {
+                        Text("Number: $inputNumber")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = contactName,
+                            onValueChange = { contactName = it },
+                            label = { Text("Contact Name") },
+                            singleLine = true
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        if (contactName.isNotBlank()) {
+                            onSaveContact(contactName, inputNumber) // Save it!
+                            showAddDialog = false // Close dialog
+                            contactName = "" // Reset for next time
+                        }
+                    }) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAddDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -62,14 +124,14 @@ fun DialPadScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Call and Backspace Controls Area
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Main Call Button (Centered)
+
             FloatingActionButton(
                 onClick = { if (inputNumber.isNotEmpty()) onAppCallClick(inputNumber) },
                 containerColor = Color(0xFF2A5934), // Dark Green
@@ -80,7 +142,7 @@ fun DialPadScreen(
                 Icon(Icons.Filled.Call, contentDescription = "Call", modifier = Modifier.size(36.dp))
             }
 
-            // Backspace Button (Aligned to the Right)
+
             if (inputNumber.isNotEmpty()) {
                 IconButton(
                     onClick = { inputNumber = inputNumber.dropLast(1) },
@@ -96,7 +158,7 @@ fun DialPadScreen(
             }
         }
 
-        // Subtle buttons for assignment requirements
+
         Spacer(modifier = Modifier.height(32.dp))
         Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
             TextButton(onClick = { permissionLauncher.launch(Manifest.permission.CALL_PHONE) }) {
@@ -109,7 +171,6 @@ fun DialPadScreen(
     }
 }
 
-// Updated DialButton - Cleaned up to only accept and show the number
 @Composable
 fun DialButton(number: String, onClick: () -> Unit) {
     Box(
@@ -120,7 +181,6 @@ fun DialButton(number: String, onClick: () -> Unit) {
             .background(Color(0xFF2C2C2C))
             .clickable { onClick() }
     ) {
-        // Increased font size slightly to fill the space beautifully
         Text(text = number, fontSize = 32.sp, color = Color.White, fontWeight = FontWeight.Bold)
     }
 }

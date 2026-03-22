@@ -31,7 +31,6 @@ fun IncomingCallScreen(callerName: String, onAccept: () -> Unit, onReject: () ->
             Text(text = "Incoming call...", fontSize = 20.sp, color = Color.Gray)
         }
 
-        // Profile Placeholder
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.size(150.dp).background(Color(0xFF2C2C2C), CircleShape)
